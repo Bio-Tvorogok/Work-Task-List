@@ -1,12 +1,13 @@
 
-class customNode {
+class customDCNode {
     constructor (data) {
         this.next = null;
+        this.prev = null;
         this.data = data;
     }
 }
 
-class customList {
+class customDCList {
     constructor() {
         this.heatPtr = null;
         this.size = 0;
@@ -28,9 +29,11 @@ class customList {
     }
 
     add(data) {
-        let node = new customNode(data);
+        let node = new customDCNode(data);
         if (this.heatPtr !== null) {
-            this.last().next = node;
+            let last = this.last();
+            last.next = node;
+            node.prev = last;
         } else {
             this.heatPtr = node;
         }
@@ -85,12 +88,6 @@ class customList {
     }
 
     clear() {
-        // let curr = this.heatPtr;
-        // while (curr) {
-        //     let prev = curr;
-        //     curr = curr.next;
-        //     delete prev;
-        // }
         this.heatPtr = null;
         this.size = 0;
     }
@@ -111,14 +108,16 @@ class customList {
             if (index >= this.size) {
                 let lastNode = this.last();
                 lastNode.next = new customNode(data);
+                lastNode.next.prev = lastNode;
                 this.size++;
             } else if (index > 0){
                 let node = this.getByIndex(index - 1);
                 if (node) {
                     let nodeNext = node.next;
                     node.next = new customNode(data);
-                    this.size++;
                     node.next.next = nodeNext;
+                    node.next.prev = node;
+                    this.size++;
                 } else {
                     assert(node);
                 }
@@ -127,6 +126,7 @@ class customList {
                 this.heatPtr = new customNode(data);
                 this.size++;
                 this.heatPtr.next = next;
+                next.prev = this.heatPtr;
             }
         }
     }
@@ -134,20 +134,15 @@ class customList {
     reverse() {
         if (this.size > 1) {
 
-            let prev = this.heatPtr;
-            let curr = this.heatPtr.next;
-            let next;
-
-            this.heatPtr.next = null;
+            let curr = this.heatPtr;
 
             while (curr) {
-                next = curr.next;
-                curr.next = prev;
-                prev = curr;
+                let next = curr.next;
+                curr.next = curr.prev;
+                curr.prev = next;
+                this.heatPtr = curr;
                 curr = next;
             }
-
-            this.heatPtr = prev;
         }
     }
 
@@ -155,19 +150,18 @@ class customList {
         if (this.size > 1) {
             let allSorted = false;
             while (!allSorted) {
-                let curr = this.heatPtr.next;
-                let prev = this.heatPtr;
+                let curr = this.heatPtr;
+                allSorted = true;
                 while (curr) {
-                    if (prev.data > curr.data){
-                        let tmp = curr.data;
-                        curr.data = prev.data;
-                        prev.data = tmp;
-                        allSorted = false;
-                        break;
+                    if (curr.prev) {
+                        if (curr.data < curr.prev.data) {
+                            let currData = curr.data;
+                            curr.data =curr.prev.data;
+                            curr.prev.data = currData;
+                            allSorted = false;
+                        }
                     }
-                    prev = curr;
                     curr = curr.next;
-                    allSorted = true;
                 }
             }
         }
@@ -177,92 +171,45 @@ class customList {
         if (this.heatPtr) {
             let min = null;
             let curr = this.heatPtr;
-            let iter = 0;
+            let saveNode = null;
+
             for (let i = 0; i < this.size; i++) {
                 if (min) {
-                    if (min > curr.data){
+                    if (min > curr.data) {
                         min = curr.data;
-                        iter = i;
+                        saveNode = curr;
+
                     }
                 } else {
                     min = curr.data;
-                    iter = i;
+                    saveNode = curr;
                 }
-
                 curr = curr.next;
             }
 
-            let prev = null
-            curr = this.heatPtr;
-            for (let i = 0; i <= iter; i++) {
-                if (i == iter) {
-                    if (prev) {
-                        let minEl = curr;
-                        prev.next = curr.next;
-                        this.size--;
-                        return minEl;
-                    } else {
-                        let minEl = curr;
-                        this.heatPtr = this.heatPtr.next;
-                        this.size--;
-                        return minEl;
-                    }
+            if (saveNode) {
+                if (!saveNode.next && !saveNode.prev) {
+                    this.heatPtr = null;
+                } else if (!saveNode.prev) {
+                    this.heatPtr = this.heatPtr.next;
+                    this.heatPtr.prev = null;
+                } else if (!saveNode.next) {
+                    saveNode.prev.next = null;
+                } else {
+                    saveNode.prev.next = saveNode.next;
+                    saveNode.next.prev = saveNode.prev;
                 }
-                prev = curr;
-                curr = curr.next
+                this.size--;
+                return saveNode;
             }
 
         }
+
         return null;
     }
 
-    // appendAfterMax(data) {
-    //     if (this.heatPtr) {
-    //         if (this.size > 1) {
-                
-    //             let curr = this.heatPtr;
-    //             let prev = null;
-    //             let hasInsert = false;
-
-    //             while (curr) {
-    //                 if (curr.data > data) {
-
-    //                     if (prev === null) {
-    //                         this.heatPtr = new customNode(data);
-    //                         this.heatPtr.next = curr;
-    //                     } else {
-    //                         prev.next = new customNode(data);
-    //                         prev.next.next = curr;
-    //                     }
-    //                     hasInsert = true;
-    //                     break;
-    //                 }
-    //                 prev = curr;
-    //                 curr = curr.next;
-    //             }
-    //             if (!hasInsert) {
-    //                 if (prev) {
-    //                     prev.next = new customNode(data);
-    //                 }
-    //             }
-
-    //         } else {
-    //             if (this.heatPtr.data > data) {
-    //                 let next = this.heatPtr;
-    //                 this.heatPtr = new customNode(data);
-    //                 this.heatPtr.next = next;
-    //             } else {
-    //                 this.heatPtr.next = new customNode(data);
-    //             }
-    //         }
-    //     } else {
-    //         this.heatPtr = new customNode(data);
-    //     }
-    //     this.size++;
-    // }
-
     merge(list) {
-        let mergeList = new customList();
+        let mergeList = new customDCList();
 
         let currMy = this.heatPtr;
         let currList = list.heatPtr;
@@ -272,32 +219,24 @@ class customList {
             let min2 = null;
             if (currMy) {
                 min1 = this.popMinElement();
-                // mergeList.appendAfterMax(currMy.data)
             }
             if (currList) {
                 min2 = list.popMinElement();
-                // mergeList.appendAfterMax(currList.data);
             }
             if (min1 && min2) {
-                if (min1.data < min2.data){
-                    mergeList.add(min1.data);
-                    mergeList.add(min2.data);
-                } else {
-                    mergeList.add(min2.data);
-                    mergeList.add(min1.data);
-                }
+                mergeList.add(Math.min(min1.data, min2.data));
+                mergeList.add(Math.max(min1.data, min2.data));
             } else {
                 if (!min1 && !min2) {
                     break;
                 }
                 if (min1) {
-                    mergeList.data(min1);
-                }
+                    mergeList.add(min1.data);
+                } 
                 if (min2) {
-                    mergeList.data(min2);
+                    mergeList.add(min2.data);
                 }
             }
-
         }
 
         return mergeList;
